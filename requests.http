@@ -5,6 +5,18 @@
 GET /pacotes
 Host: localhost:8080
 
+	# pacotes status
+	#---
+	GET /pacotes/status/{status}
+	Host: localhost:8080
+	Content-Type: application/json
+
+	# pacotes destinatario
+	#---
+	GET /pacotes/destinatario/{destinario}
+	Host: localhost:8080
+	Content-Type: application/json
+
 ###
 POST /pacotes
 Host: localhost:8080
@@ -54,6 +66,7 @@ GET /rastreamentos/2
 Host: localhost:8080
 
 
+
 # Endereco
 #--------------------------------------------------------
 ###
@@ -72,3 +85,4 @@ Content-Type: application/json
 	"estado": "SP",
 	"cep": "12345-678"
 }
+

@@ -8,10 +8,13 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.edu.iftm.rastreamento.model.Endereco;
 import br.edu.iftm.rastreamento.model.Pacote;
 import br.edu.iftm.rastreamento.model.Rastreamento;
+import br.edu.iftm.rastreamento.repository.EnderecoRepository;
 import br.edu.iftm.rastreamento.repository.PacoteRepository;
 import br.edu.iftm.rastreamento.repository.RastreamentoRepository;
+import br.edu.iftm.rastreamento.service.exceptions.NaoAcheiException;
 
 @Service
 public class PacoteService {
@@ -19,6 +22,8 @@ public class PacoteService {
     @Autowired
     private PacoteRepository pacoteRepository;
 
+    @Autowired 
+    private EnderecoRepository enderecoRepository;
     @Autowired
     private RastreamentoRepository rastreamentoRepository;
 
@@ -30,25 +35,50 @@ public class PacoteService {
     }
 
     public Pacote getPacoteById(Long id) {
-        return pacoteRepository.findById(id).get();
+        return pacoteRepository.findById(id).orElseThrow(() -> new NaoAcheiException("Pacote com ID " + id + " não encontrado"));
     }
 
     public Pacote createPacote(Pacote pacote) {
-        return pacoteRepository.save(pacote);
+
+    Endereco endereco = pacote.getEndereco();
+    if (endereco != null) {
+      
+        if (endereco.getId() == null) {
+            endereco = enderecoRepository.save(endereco); 
+        } else {
+    
+            if (!enderecoRepository.existsById(endereco.getId())) {
+                throw new NaoAcheiException("Endereço com ID " + endereco.getId() + " não encontrado.");
+            }
+        }
     }
 
+    pacote.setEndereco(endereco); 
+    return pacoteRepository.save(pacote);
+}
+
     public Pacote updatePacote(Long id, Pacote pacoteDetails) {
-        Pacote pacote = pacoteRepository.findById(id).get();
-        pacote.setId(id);
-        pacote.atualizarStatus(pacoteDetails.getStatus(), Date.from(Instant.now()), "não implementado");
-        //obter o ultimo rastreamento
-        Rastreamento ultiRastreamento = pacote.getRastreamentos().get(pacote.getRastreamentos().size() - 1);
-        rastreamentoRepository.save(ultiRastreamento);
+
+        Pacote pacote = pacoteRepository.findById(id).orElseThrow(() -> new NaoAcheiException("Pacote com ID " + id + " não encontrado"));
+
+        // Atualiza os detalhes do pacote
+        pacote.setIdUnico(pacoteDetails.getIdUnico());
+        pacote.setDestinatario(pacoteDetails.getDestinatario());
+        pacote.setStatus(pacoteDetails.getStatus());
+
+        // Salva o pacote atualizado
         return pacoteRepository.save(pacote);
+
     }
 
     public void deletePacote(Long id) {
         Pacote pacote = pacoteRepository.findById(id).get();
         pacoteRepository.delete(pacote);
+    }
+    public List<Pacote> getStatus(String status){
+        return pacoteRepository.findByStatus(status);
+    }
+    public List<Pacote> getDestinatario(String destinatario){
+        return pacoteRepository.findByDestinatario(destinatario);
     }
 }
